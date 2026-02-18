@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>История Казахстана: Великие Ханы Степи</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #fcfaf7; color: #1a202c; }
+        h1, h2, h3, .serif { font-family: 'Merriweather', serif; }
+
+        .chart-container { position: relative; width: 100%; max-width: 900px; margin: 0 auto; height: 400px; max-height: 450px; }
+
+        .tab-active { border-bottom: 3px solid #b7791f; color: #b7791f; font-weight: 700; }
+
+        .khan-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #e2e8f0; }
+        .khan-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1); border-color: #d69e2e; }
+
+        .timeline-marker { width: 12px; height: 12px; border-radius: 50%; background: #d69e2e; position: absolute; left: -6px; top: 10px; }
+
+        /* Site nav */
+        #site-nav {
+            background: #1a1a2e;
+            border-bottom: 3px solid #c0a062;
+            display: flex;
+            align-items: stretch;
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+        }
+        #site-nav .site-brand {
+            background: #c0a062;
+            color: #1a1a2e;
+            padding: 12px 20px;
+            font-family: 'Merriweather', serif;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        #site-nav .site-links { display: flex; align-items: center; padding: 0 8px; gap: 2px; }
+        #site-nav .site-links a {
+            color: #c0c0d0;
+            text-decoration: none;
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            border-radius: 4px;
+            transition: color 0.2s, background 0.2s;
+        }
+        #site-nav .site-links a:hover { color: #c0a062; background: rgba(192,160,98,0.12); }
+        #site-nav .site-links a.current { color: #c0a062; font-weight: 600; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Site Navigation -->
+    <nav id="site-nav">
+        <a href="index.html" class="site-brand">🇰🇿 История КЗ</a>
+        <div class="site-links">
+            <a href="index.html">Главная</a>
+            <a href="dfjsik.html" class="current">Ханы</a>
+            <a href="allinfo.html">Тренажёр ЕНТ</a>
+        </div>
+    </nav>
+
+    <!-- App Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center mb-4 md:mb-0">
+                <div class="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center mr-3 text-white font-bold">KH</div>
+                <h1 class="text-xl font-bold tracking-tight text-gray-800">ХАНЫ КАЗАХСТАНА <span class="text-yellow-600">ЕНТ 2024</span></h1>
+            </div>
+            <nav class="flex space-x-6 text-sm font-medium">
+                <button onclick="app.setCategory('all')" id="tab-all" class="tab-btn tab-active pb-1">Все</button>
+                <button onclick="app.setCategory('horde')" id="tab-horde" class="tab-btn pb-1">Золотая Орда</button>
+                <button onclick="app.setCategory('rise')" id="tab-rise" class="tab-btn pb-1">Расцвет Ханства</button>
+                <button onclick="app.setCategory('resistance')" id="tab-resistance" class="tab-btn pb-1">Сопротивление</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- Analytics Section -->
+        <section class="mb-12">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                    <div class="lg:col-span-1">
+                        <h2 class="text-2xl font-bold mb-4 serif text-gray-900">Аналитика правления</h2>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                            Для ЕНТ важно не только знать имена, но и понимать периоды стабильности. 
+                            Длинные столбцы соответствуют периодам укрепления государства (Хакназар, Тауке), 
+                            короткие — периодам смут или войн.
+                        </p>
+                        <div class="space-y-2">
+                            <div class="flex items-center text-xs">
+                                <span class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>
+                                <span>Золотая Орда и Ак Орда</span>
+                            </div>
+                            <div class="flex items-center text-xs">
+                                <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                                <span>Казахское Ханство</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <div class="chart-container">
+                            <canvas id="mainKhansChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search & Filter -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
+            <h2 id="section-title" class="text-3xl font-bold serif">Все правители</h2>
+            <div class="relative w-full md:w-64">
+                <input type="text" id="khanSearch" onkeyup="app.search()" placeholder="Поиск хана..."
+                    class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-yellow-500 outline-none transition-all">
+                <span class="absolute right-4 top-2.5 text-gray-400">🔍</span>
+            </div>
+        </div>
+
+        <!-- Khans Grid -->
+        <div id="khansGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+
+        <!-- Timeline Section -->
+        <section class="mt-20">
+            <h2 class="text-2xl font-bold mb-8 serif text-center">Хронологическая шпаргалка</h2>
+            <div class="max-w-4xl mx-auto border-l-2 border-gray-200 ml-4 md:ml-auto relative">
+                <div id="chronoList" class="space-y-12 pb-12"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 py-12 mt-20">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-white font-bold mb-4">Подготовка к ЕНТ: История Казахстана</p>
+            <p class="text-sm">Данные структурированы на основе школьной программы и тестов Национального центра тестирования.</p>
+        </div>
+    </footer>
+
+    <script>
+        const khans = [
+            { name: "Узбек хан", years: "1313–1341", duration: 28, category: "horde", title: "Хан Золотой Орды", desc: "При нём Ислам стал государственной религией Золотой Орды (1312/13). Расцвет могущества.", keywords: ["Ислам", "Сарай-Берке", "Расцвет", "Золотая Орда"] },
+            { name: "Урус хан", years: "1368–1377", duration: 9, category: "horde", title: "Хан Ак Орды", desc: "Считается одним из предков казахских ханов. Укрепил Ак Орду, боролся с Тохтамышем.", keywords: ["Ак Орда", "Левый фланг", "Сыгнак"] },
+            { name: "Абулхаир хан", years: "1428–1468", duration: 40, category: "horde", title: "Хан «Кочевых узбеков»", desc: "Правил 40 лет. После поражения от ойратов в 1457г. начался кризис, приведший к откочёвке Керея и Жанибека.", keywords: ["Узун-Тимур", "Ойраты", "Сыгнак", "Кризис"] },
+            { name: "Керей и Жанибек", years: "1465–1480", duration: 15, category: "rise", title: "Основатели", desc: "Основали ханство в Жетысу (р. Чу и Талас). Первые земли — Козыбасы.", keywords: ["1465", "Могулистан", "Откочёвка", "Чу"] },
+            { name: "Бурундук хан", years: "1480–1511", duration: 31, category: "rise", title: "Сын Керея", desc: "Воинственный правитель. Вёл долгие войны с Шайбанидами за присырдарьинские города. Уступил власть Касыму.", keywords: ["Войны", "Шайбани", "Сын Керея"] },
+            { name: "Касым хан", years: "1511–1518", duration: 7, category: "rise", title: "«Светлый путь»", desc: "Население — 1 млн человек. Границы до Яика (Урала). Первый свод законов.", keywords: ["Законы", "1 миллион", "Яик", "Послы"] },
+            { name: "Тахир хан", years: "1523–1533", duration: 10, category: "rise", title: "Период смут", desc: "Неудачливый дипломат. При нём начался распад, потеряна часть земель. Бежал в Киргизию.", keywords: ["Неудачи", "Смута", "Киргизы"] },
+            { name: "Хакназар хан", years: "1538–1580", duration: 42, category: "rise", title: "«Собиратель земель»", desc: "Возродил величие после смут. Объединил Ногайскую орду и казахов. Дольше всех на троне.", keywords: ["Возрождение", "Ногайцы", "42 года"] },
+            { name: "Есим хан", years: "1598–1628", duration: 30, category: "rise", title: "«Исконный путь»", desc: "Перенёс столицу в Туркестан. Отразил угрозу ойратов. Подавил мятеж Турсун-хана.", keywords: ["Туркестан", "Турсун", "Катаганское побоище"] },
+            { name: "Жангир хан", years: "1628–1652", duration: 24, category: "resistance", title: "Салкам (Внушительный)", desc: "Герой Орбулакской битвы (1643). С 600 воинами противостоял 50-тысячному войску джунгар.", keywords: ["Орбулак", "1643", "Джунгары"] },
+            { name: "Тауке хан", years: "1680–1715", duration: 35, category: "rise", title: "«Жеты Жаргы»", desc: "Золотой век. Создал совет биев. Укрепил единство жузов перед лицом джунгарской угрозы.", keywords: ["Бии", "Законы", "Единство", "Туркестан"] },
+            { name: "Абулхаир (Младший жуз)", years: "1718–1748", duration: 30, category: "resistance", title: "Анракайский герой", desc: "Командовал ополчением в Анракайской битве. В 1731г. принял российское подданство.", keywords: ["1731", "Анракай", "Подданство", "Младший жуз"] },
+            { name: "Абылай хан", years: "1771–1781", duration: 10, category: "resistance", title: "Великий дипломат", desc: "Объединил все жузы. Политика двойного подданства (Россия и Китай). Символ независимости.", keywords: ["Три жуза", "Китай", "Абильмансур"] },
+            { name: "Кенесары хан", years: "1841–1847", duration: 6, category: "resistance", title: "Последний хан", desc: "Возглавил самое крупное восстание. Пытался восстановить единое ханство в XIX веке.", keywords: ["Восстание", "1841", "Реформы"] }
+        ];
+
+        const app = {
+            category: 'all',
+            chart: null,
+
+            init() {
+                this.render();
+                this.initChart();
+                this.renderChrono();
+            },
+
+            setCategory(cat) {
+                this.category = cat;
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+                document.getElementById(`tab-${cat}`).classList.add('tab-active');
+                const titles = { all: 'Все правители', horde: 'Эпоха Орды', rise: 'Расцвет и единство', resistance: 'Борьба за свободу' };
+                document.getElementById('section-title').innerText = titles[cat];
+                this.render();
+            },
+
+            search() {
+                const query = document.getElementById('khanSearch').value.toLowerCase();
+                this.render(query);
+            },
+
+            render(filter = '') {
+                const grid = document.getElementById('khansGrid');
+                const filtered = khans.filter(k => {
+                    const matchesCat = this.category === 'all' || k.category === this.category;
+                    const matchesSearch = k.name.toLowerCase().includes(filter) || k.keywords.some(kw => kw.toLowerCase().includes(filter));
+                    return matchesCat && matchesSearch;
+                });
+                grid.innerHTML = filtered.map(k => `
+                    <div class="khan-card bg-white p-5 rounded-2xl flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold px-2 py-1 rounded bg-yellow-100 text-yellow-800 uppercase tracking-wider">${k.years}</span>
+                            <span class="text-xl">⚔️</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-1 text-gray-900">${k.name}</h3>
+                        <p class="text-sm font-semibold text-yellow-600 mb-3">${k.title}</p>
+                        <p class="text-gray-600 text-xs mb-4 leading-relaxed flex-grow">${k.desc}</p>
+                        <div class="flex flex-wrap gap-1 mt-auto pt-4 border-t border-gray-50">
+                            ${k.keywords.map(kw => `<span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">#${kw}</span>`).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            renderChrono() {
+                const list = document.getElementById('chronoList');
+                const sorted = [...khans].sort((a, b) => parseInt(a.years) - parseInt(b.years));
+                list.innerHTML = sorted.map(k => `
+                    <div class="relative pl-8 md:pl-0 md:flex md:items-center">
+                        <div class="hidden md:block md:w-1/3 text-right pr-8 text-sm font-mono text-gray-400">${k.years}</div>
+                        <div class="timeline-marker"></div>
+                        <div class="md:w-2/3 bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-yellow-200">
+                            <h4 class="font-bold text-gray-800">${k.name}</h4>
+                            <p class="text-xs text-gray-500">${k.title}</p>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            initChart() {
+                const ctx = document.getElementById('mainKhansChart').getContext('2d');
+                const chartData = [...khans].sort((a, b) => b.duration - a.duration).slice(0, 12);
+                this.chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.map(k => k.name),
+                        datasets: [{
+                            label: 'Продолжительность правления (лет)',
+                            data: chartData.map(k => k.duration),
+                            backgroundColor: chartData.map(k => k.category === 'horde' ? '#d69e2e' : '#3182ce'),
+                            borderRadius: 6,
+                            barThickness: 20
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { afterLabel: (ctx) => `Годы: ${chartData[ctx.dataIndex].years}` } }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                            y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } }
+                        }
+                    }
+                });
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
